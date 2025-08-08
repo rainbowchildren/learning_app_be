@@ -1,10 +1,10 @@
 const express = require("express");
-const { createNewUser } = require("../controllers/authController");
+const { createNewUser, getUsers } = require("../controllers/authController");
 
 const authService = express.Router();
 
 authService.post("/new-user", createNewUser);
 
-authService.get("/userslist");
+authService.get("/userslist", getUsers);
 
 module.exports = authService;
