@@ -34,7 +34,7 @@ const authenticateUser = async (res, req) => {
 const getUsers = async (req, res) => {
   const usersList = await user.find({});
   console.log("usersList", usersList);
-  res.send({"message":usersList);
+  res.send({"message":usersList});
 };
 
 module.exports = { createNewUser, getUsers };
