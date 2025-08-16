@@ -1,10 +1,21 @@
 const express = require("express");
-const { createNewUser, getUsers } = require("../controllers/authController");
+const {
+  createNewUser,
+  usernameCheck,
+  login,
+  emailIdExist,
+  resetPassword,
+  changePassword,
+} = require("../controllers/authController");
 
 const authService = express.Router();
 
-authService.post("/new-user", createNewUser);
+authService.post("/createUser", createNewUser);
 
-authService.get("/userslist", getUsers);
+authService.get("/usernameCheck", usernameCheck);
+authService.post("/login", login);
+authService.get("/emailCheck", emailIdExist);
+authService.post("/resetPassword", resetPassword);
+authService.post("/changePassword", changePassword);
 
 module.exports = authService;
