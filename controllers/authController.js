@@ -1,9 +1,14 @@
-const { generateJWT } = require("../middlewares/authMiddleware");
-const userModel = require("../models/userModel");
-const { sendRes } = require("../utils/response");
-const bcrypt = require("bcryptjs");
+// const { generateJWT } = require("../middlewares/authMiddleware");
+// const authModel = require("../models/authModel");
+// const { sendRes } = require("../utils/response");
+// const bcrypt = require("bcryptjs");
 
-const createNewUser = async (req, res) => {
+import { generateJWT } from "../middlewares/authMiddleware.js";
+import authModel from "../models/authModel.js";
+import { sendRes } from "../utils/response.js";
+import bcrypt from "bcryptjs";
+
+export const createNewUser = async (req, res) => {
   try {
     const { username, email, phoneNumber, password } = req.body;
     console.log("coming to createnewuser");
@@ -13,7 +18,7 @@ const createNewUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await new userModel({
+    const newUser = await new authModel({
       username,
       email,
       phoneNumber,
@@ -30,7 +35,7 @@ const createNewUser = async (req, res) => {
   }
 };
 
-const usernameCheck = async (req, res) => {
+export const usernameCheck = async (req, res) => {
   try {
     const { username, email } = req.query;
 
@@ -38,7 +43,7 @@ const usernameCheck = async (req, res) => {
       res.status(400).json({ message: "username or email should be present" });
     }
 
-    const userRecord = await userModel.findOne({
+    const userRecord = await authModel.findOne({
       $or: [{ email }, { username }],
     });
 
@@ -49,7 +54,7 @@ const usernameCheck = async (req, res) => {
   }
 };
 
-const login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, username, password } = req.body;
 
@@ -59,7 +64,7 @@ const login = async (req, res) => {
 
     const userRecordQuery = email ? { email } : { username };
     console.log("userRecordQuery", userRecordQuery);
-    const userRecord = await userModel.findOne(userRecordQuery);
+    const userRecord = await authModel.findOne(userRecordQuery);
     console.log("userRecord", userRecord);
     if (!userRecord) {
       res.status(400).send({ message: "no user found" });
@@ -81,24 +86,24 @@ const login = async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 };
-const emailIdExist = async (req, res) => {
+export const emailIdExist = async (req, res) => {
   try {
   } catch (e) {}
 };
-const resetPassword = async (req, res) => {
+export const resetPassword = async (req, res) => {
   try {
   } catch (e) {}
 };
-const changePassword = async (req, res) => {
+export const changePassword = async (req, res) => {
   try {
   } catch (e) {}
 };
 
-module.exports = {
-  createNewUser,
-  usernameCheck,
-  login,
-  emailIdExist,
-  resetPassword,
-  changePassword,
-};
+// module.exports = {
+//   createNewUser,
+//   usernameCheck,
+//   login,
+//   emailIdExist,
+//   resetPassword,
+//   changePassword,
+// };

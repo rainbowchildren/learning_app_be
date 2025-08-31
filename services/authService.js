@@ -1,12 +1,20 @@
-const express = require("express");
-const {
+import express from "express";
+// const {
+//   createNewUser,
+//   usernameCheck,
+//   login,
+//   emailIdExist,
+//   resetPassword,
+//   changePassword,
+// } = require("../controllers/authController");
+import {
   createNewUser,
   usernameCheck,
   login,
   emailIdExist,
   resetPassword,
   changePassword,
-} = require("../controllers/authController");
+} from "../controllers/authController.js";
 
 const authService = express.Router();
 
@@ -18,4 +26,6 @@ authService.get("/emailCheck", emailIdExist);
 authService.post("/resetPassword", resetPassword);
 authService.post("/changePassword", changePassword);
 
-module.exports = authService;
+// module.exports = authService;
+
+export default authService;

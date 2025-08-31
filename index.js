@@ -1,10 +1,17 @@
 // index.js
-const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const authService = require("./services/authService");
-const { ROUTES } = require("./routes/routes");
+// const express = require("express");
+import express from "express";
+// const mongoose = require("mongoose");
+import mongoose from "mongoose";
+// const dotenv = require("dotenv");
+import dotenv from "dotenv";
+// const cors = require("cors");
+import cors from "cors";
+// const authService = require("./services/authService");
+import authService from "./services/authService.js";
+import questionService from "./services/questionService.js";
+import userLevelProgress from "./services/userLevelProgress.js";
+// const { ROUTES } = require("./routes/routes");
 
 dotenv.config();
 
@@ -16,12 +23,14 @@ const PORT = process.env.PORT || 5000;
 // Middleware to parse JSON
 app.use(express.json());
 app.use("/auth", authService);
+app.use("/question", questionService);
+app.use("/levelProgress", userLevelProgress);
 // ROUTES.forEach((route) => {
 //   app.use(route.path, route.service);
 // });
 // MongoDB connection
 mongoose
-  .connect("mongodb://localhost:27017/learning_app_local", {
+  .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
