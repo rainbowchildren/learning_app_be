@@ -1,21 +1,21 @@
 import mongoose from "mongoose";
-import levelProgress from "../models/levelProgress.js";
+// import levelProgress from "../models/levelProgress.js";
 import authModel from "../models/authModel.js";
+import answersModel from "../models/answersModel.js";
+import levelProgressModel from "../models/levelProgressModel.js";
 
 export const saveProgress = async (req, res) => {
   try {
-    const { userId } = req.body;
-    // const objectUserId = new mongoose.Types.ObjectId.createFromHexString(
-    //   userId
-    // );
-    const findUserProgressRecord = await authModel.findOne({
-      _id: userId,
-    });
-    console.log("findUserProgressRecord", findUserProgressRecord);
+    const { userId, questionId, id, answer } = req.body;
 
-    if (!findUserProgressRecord) {
-      res.status(200).send({ message: "no user found" });
-    } else res.status(200).send({ message: "user found" });
+    const answerByQuestion = await answersModel.findOne({ questionRef: id });
+    const checkAnswer = true;
+
+    if (!checkAnswer) {
+      res.status(200).send({ answerCheck: false });
+    } else {
+      const updateQuestionStatus = await levelProgressModel.findOne({ userId });
+    }
   } catch (e) {
     console.log(e);
   }

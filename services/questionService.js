@@ -7,7 +7,7 @@ import {
 const questionService = Router();
 
 questionService.post("/new", addQuestion);
-questionService.get("/fetch", fetchQuestions); //params
-// questionService.get("/fetch", fetchQuestions); //query
+// questionService.get("/fetch", fetchQuestions); //params
+questionService.get("/fetch", fetchQuestions); //query
 
 export default questionService;

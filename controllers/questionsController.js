@@ -1,44 +1,66 @@
 import questionsModel from "../models/questionsModel.js";
-import levelProgress from "../models/levelProgress.js";
+import levelProgressModel from "../models/levelProgressModel.js";
 
 export const addQuestion = async (req, res) => {
   try {
     const { questions } = req.body;
     console.log("QUESTIONS", questions);
-    const res = await Promise.all(
-      questions.forEach(async (question) => {
-        console.log("question", question);
-        const record = await new questionsModel({
-          questionId: question,
-        });
-        console.log("record", record);
-        await record.save();
-      })
+    const result = await questionsModel.insertMany(
+      questions.map((q) => ({ questionId: q }))
     );
-    res.status(200).send({ message: true });
+    console.log("result", result);
+    res
+      .status(200)
+      .send({ message: "questions insertion successfull", success: true });
   } catch (e) {
     console.log(e);
   }
 };
 
+// fetchQuestions controller
 export const fetchQuestions = async (req, res) => {
   try {
-    const { type } = req.query;
-    console.log("type", type);
-    //res.status(400).send({ message: req.query });
-    if (type != "start" && type != "progress") {
-      res.status(400).send({ message: "invalid query" });
+    const { type, userId } = req.query;
+
+    if ((type !== "start" && type !== "progress") || !userId) {
+      return res
+        .status(400)
+        .send({ message: "Invalid query or userId is missing" });
     }
 
-    let limit = type === "start" ? 3 : 1;
+    const userProgress = await levelProgressModel.findOne({ userId });
+    console.log("userProgress", userProgress);
+    if (type === "start") {
+      if (!userProgress) {
+        const newQ = await questionsModel.aggregate([{ $limit: 3 }]);
+        console.log("newQ", newQ);
+        return res.status(200).send({ questions: newQ });
+      } else {
+        const { userJourney } = userProgress;
 
-    let userProgress = 0;
-    let questions = [];
-    if (!userProgress) {
-      questions = await questionsModel.find().limit(limit).sort({ index: 1 });
+        // const lastQuestionCompletedId =
+        //   userJourney[userJourney.length - 1].questionId;
+
+        const nextQuestions = await questionsModel
+          .find({ questionId: { $gt: "2_1" } }) // greater than last completed
+          // .sort({ questionId: 1 })                                 // ascending order
+          .limit(3);
+
+        res.status(200).send({ nextQuestions });
+      }
+    } else {
+      const nextQuestions = await questionsModel
+        .find({ questionId: { $gt: "2_1" } }) // greater than last completed
+        // .sort({ questionId: 1 })                                 // ascending order
+        .limit(1);
     }
-    res.status(200).send({ message: questions });
   } catch (e) {
-    console.log(e);
+    console.error("Error in fetchQuestions:", e);
+    res.status(500).send({ message: "Server error", error: e.message });
   }
 };
+
+//fetch questions flow
+// check if userId is there in levelProgress
+// if type = start then give 3 questions
+// if type = progress then give one question from the last question
