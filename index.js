@@ -6,6 +6,11 @@ import authService from "./services/authService.js";
 import questionService from "./services/questionService.js";
 import userLevelProgress from "./services/userLevelProgress.js";
 import { ROUTES } from "./routes/routes.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import { uploadFile } from "./helper/s3Service.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getPublicUrl } from "./helper/s3Service.js";
 
 dotenv.config();
 
@@ -13,12 +18,12 @@ const app = express();
 
 app.use(cors(["http://localhost:5173"]));
 const PORT = process.env.PORT || 5000;
+// __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middleware to parse JSON
 app.use(express.json());
-// app.use("/auth", authService);
-// app.use("/question", questionService);
-// app.use("/levelProgress", userLevelProgress);
 
 ROUTES.forEach((route) => {
   app.use(route.path, route.service);
@@ -44,6 +49,26 @@ console.log("NODE_ENV", process.env.NODE_ENV);
 app.get("/", (req, res) => {
   res.send("Hello from Express & MongoDB!");
 });
+
+// app.get("/testuploadAudio", async (req, res) => {
+//   try {
+//     const filePath = path.join(__dirname, "sampleAudio.m4a"); // file at root
+//     const s3Key = "audio/sampleAudio.m4a"; // destination in S3 bucket
+
+//     await uploadFile(filePath, s3Key);
+
+//     res.status(200).send({ message: "✅ Audio uploaded successfully!" });
+//   } catch (err) {
+//     console.error("❌ Upload failed:", err);
+//     res.status(500).send({ error: "Upload failed", details: err.message });
+//   }
+// });
+
+// app.get("/getAudio/:fileKey", (req, res) => {
+//   const { fileKey } = req.params;
+//   const url = getPublicUrl(fileKey);
+//   res.status(200).send({ url });
+// });
 
 // Start server
 app.listen(PORT, () => {
