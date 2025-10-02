@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { ROLES } from "../constants/constants.js";
 import { generateJWT } from "../middlewares/authMiddleware.js";
 import authModel from "../models/authModel.js";
@@ -148,16 +149,19 @@ export const requestPasswordReset = async (req, res) => {
       return res.status(400).json({ message: "Username is required." });
     }
 
-    const user = await authModel.findOne({ username });
+    const user = await authModel.findOne({ username }).select("_id username");
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+    console.log("user", user);
 
     // generate JWT (short-lived)
-    const token = await generateJWT(); // adjust expiry as needed
+    //const token = await generateJWT(); // adjust expiry as needed
 
     // in real app, send via email; for now return token in response
-    return res.status(200).json({ message: "Reset token generated.", token });
+    return res
+      .status(200)
+      .json({ message: "Reset token generated.", userId: user._id });
   } catch (e) {
     console.error("Request reset password error:", e);
     return res.status(500).json({ message: "Internal server error." });
@@ -166,15 +170,18 @@ export const requestPasswordReset = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    const { userId, newPassword } = req.body;
+    const { id, newPassword } = req.body;
 
-    if (!userId || !newPassword) {
+    if (!id || !newPassword) {
       return res
         .status(400)
         .json({ message: "Token and new password are required." });
     }
-
-    const user = await authModel.findOne({ username: userId });
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
+    if (!isValidObjectId) {
+      return res.status(404).json({ message: "not a valid id" });
+    }
+    const user = await authModel.findOne({ _id: id });
     console.log("user", user);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
