@@ -12,8 +12,10 @@ import {
   usernameCheck,
   login,
   emailIdExist,
-  resetPassword,
+  // resetPassword,
   changePassword,
+  requestPasswordReset,
+  resetPassword,
 } from "../controllers/authController.js";
 
 const authService = express.Router();
@@ -23,7 +25,8 @@ authService.post("/createUser", createNewUser);
 authService.get("/usernameCheck", usernameCheck);
 authService.post("/login", login);
 authService.get("/emailCheck", emailIdExist);
-authService.post("/resetPassword", resetPassword);
+authService.post("/requestPasswordReset", requestPasswordReset);
+authService.post("/forgotPassword", resetPassword);
 authService.post("/changePassword", changePassword);
 
 // module.exports = authService;

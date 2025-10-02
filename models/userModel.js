@@ -1,5 +1,5 @@
-// const mongoose = require("mongoose");
 import mongoose from "mongoose";
+import { ROLES } from "../constants/constants.js";
 const userSchema = new mongoose.Schema(
   {
     firstName: { type: String },
@@ -7,6 +7,10 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String },
     email: { type: String, unique: true },
     dob: { type: String },
+    role: {
+      type: String,
+      enum: [ROLES.ADMIN, ROLES.OWNER, ROLES.STUDENT],
+    },
     authId: { type: mongoose.Types.ObjectId, required: true },
     profilePic: { type: String },
   },

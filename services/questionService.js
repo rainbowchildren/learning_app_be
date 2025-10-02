@@ -1,13 +1,23 @@
 import { Router } from "express";
 import {
   addQuestion,
-  fetchQuestions,
-} from "../controllers/questionsController.js";
+  nextQuestion,
+} from "../controllers/questionController.js";
+import { verifyJWTMiddleware } from "../middlewares/authMiddleware.js";
+import { authorizeRoles } from "../middlewares/RBACMiddleware.js";
+import { ROLES } from "../constants/constants.js";
+const questions = Router();
 
-const questionService = Router();
-
-questionService.post("/new", addQuestion);
-// questionService.get("/fetch", fetchQuestions); //params
-questionService.get("/fetch", fetchQuestions); //query
-
-export default questionService;
+questions.post(
+  "/bulk",
+  verifyJWTMiddleware,
+  authorizeRoles(ROLES.ADMIN, ROLES.OWNER),
+  addQuestion
+);
+questions.get(
+  "/next",
+  verifyJWTMiddleware,
+  authorizeRoles(ROLES.STUDENT),
+  nextQuestion
+);
+export default questions;

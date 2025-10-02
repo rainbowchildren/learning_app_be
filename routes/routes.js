@@ -1,6 +1,7 @@
 import authService from "../services/authService.js";
-import questionService from "../services/questionService.js";
-import userLevelProgress from "../services/userLevelProgress.js";
+import questions from "../services/questionService.js";
+import userProgress from "../services/userProgressService.js";
+
 import userService from "../services/userService.js";
 
 export const ROUTES = [
@@ -13,11 +14,11 @@ export const ROUTES = [
     service: userService,
   },
   {
-    path: "/question",
-    service: questionService,
+    path: "/api/content",
+    service: questions,
   },
   {
-    path: "/levelProgress",
-    service: userLevelProgress,
+    path: "/api/journey",
+    service: userProgress,
   },
 ];

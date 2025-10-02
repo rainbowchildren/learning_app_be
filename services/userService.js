@@ -1,8 +1,14 @@
 import { Router } from "express";
-import { getUser } from "../controllers/userController.js";
+import {
+  deleteProfile,
+  getUser,
+  updateProfile,
+} from "../controllers/userController.js";
 
 const userService = Router();
 
-userService.get("/getDetails", getUser);
+userService.get("/getProfile", getUser);
+userService.patch("/updateProfile", updateProfile);
+userService.delete("/deleteProfile", deleteProfile);
 
 export default userService;
