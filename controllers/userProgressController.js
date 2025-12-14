@@ -1,7 +1,6 @@
 import userProgress from "../models/userProgress.js";
 
-import UserProgress from "../models/userProgress.js";
-import ContentMapModel from "../models/ContentMapModel.js";
+import ContentMapModel from "../models/contentMapModel.js";
 
 export const saveJourney = async (req, res) => {
   try {
