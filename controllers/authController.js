@@ -2,17 +2,33 @@ import mongoose from "mongoose";
 import { ROLES } from "../constants/constants.js";
 import { generateJWT } from "../middlewares/authMiddleware.js";
 import authModel from "../models/authModel.js";
+import organisationModel from "../models/organisationModel.js";
 import userModel from "../models/userModel.js";
 import bcrypt from "bcryptjs";
+import { createUserService } from "./bulkUploadController.js";
 
-export const createNewUser = async (req, res) => {
+export const createAdmin = async (req, res) => {
   try {
-    const { username, password, role } = req.body;
-    if (role === ROLES.OWNER) {
-      res.status(400).send({ message: "owner cannot be created" });
+    const { username, password, role, orgId } = req.body;
+
+    if (req.role != ROLES.OWNER) {
+      return res
+        .status(400)
+        .send({ message: "Admin can only be created by owner" });
     }
-    if (!username || !password || !role) {
-      res.status(400).json({ message: "missing" });
+    if (!username || !password || !role || !orgId) {
+      return res.status(400).json({ message: "missing" });
+    }
+
+    const findUser = await authModel.findOne({ username: username });
+    if (findUser) {
+      return res.status(400).send({ message: "user already exists" });
+    }
+
+    const findOrg = await organisationModel.findOne({ _id: orgId });
+
+    if (!findOrg) {
+      return res.status(400).send({ message: "organisation doesn't exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -26,14 +42,39 @@ export const createNewUser = async (req, res) => {
 
     if (savedUserAuth) {
       newUserRecord = new userModel({
-        authId: savedUserAuth._id,
+        auth: savedUserAuth._id,
         role,
+        username,
+        orgId,
       });
       await newUserRecord.save();
     }
-    console.log("newUserRecord", newUserRecord);
     const token = await generateJWT(newUserRecord._id, role);
-    res.status(200).json({ message: "user created succesully", token });
+    res.status(201).json({ message: "user created succesully", token });
+  } catch (e) {
+    console.log("createAdmin", e);
+    res.status(500).json({ error: e.message });
+  }
+};
+export const createNewUser = async (req, res) => {
+  try {
+    const { username, password, role, orgId } = req.body;
+
+    if (role === ROLES.OWNER) {
+      return res.status(400).send({ message: "owner cannot be created" });
+    }
+    if (!username || !password || !role || !orgId) {
+      return res.status(400).json({ message: "missing" });
+    }
+
+    const result = await createUserService({ username, password, role, orgId });
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    console.log("token", result);
+    res
+      .status(200)
+      .json({ message: "user created succesully", token: result.token });
   } catch (e) {
     console.log("createnewUser", e);
     res.status(500).json({ error: e.message });
@@ -68,9 +109,7 @@ export const login = async (req, res) => {
     }
 
     const authQuery = email ? { email } : { username };
-    console.log("userRecorauthQuerydQuery", authQuery);
     const authRecord = await authModel.findOne(authQuery);
-    console.log("authRecord", authRecord);
     if (!authRecord) {
       res.status(400).send({ message: "no user found" });
     }
@@ -82,9 +121,11 @@ export const login = async (req, res) => {
     if (!authenticatePassword) {
       res.status(400).send({ message: "password is wrong" });
     }
-
-    const userData = await userModel.findOne({ authId: authRecord._id });
+    const userData = await userModel.findOne({ auth: authRecord._id });
     console.log("userData", userData);
+    if (!userData) {
+      return res.status(401).send({ message: "No User found", success: false });
+    }
     const token = await generateJWT(userData._id, userData.role);
 
     res.status(200).send({ message: "Successfully authenticated", token });
@@ -153,7 +194,6 @@ export const requestPasswordReset = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    console.log("user", user);
 
     // generate JWT (short-lived)
     //const token = await generateJWT(); // adjust expiry as needed
@@ -182,7 +222,6 @@ export const resetPassword = async (req, res) => {
       return res.status(404).json({ message: "not a valid id" });
     }
     const user = await authModel.findOne({ _id: id });
-    console.log("user", user);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -205,6 +244,37 @@ export const resetPassword = async (req, res) => {
   } catch (e) {
     console.error("Reset password error:", e);
     return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+//OWNER
+export const createOwner = async (req, res) => {
+  try {
+    const { username, password, email } = req.body;
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ message: "username and password required" });
+    }
+    const existingOwner = await userModel.findOne({ role: ROLES.OWNER });
+    if (existingOwner) {
+      return res.status(400).json({ message: "owner already exists" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const authDoc = await authModel.create({
+      username,
+      password: hashedPassword,
+    });
+    const ownerDoc = await userModel.create({
+      auth: authDoc._id,
+      role: ROLES.OWNER,
+      username,
+      email,
+    });
+    const token = await generateJWT(ownerDoc._id, ROLES.OWNER);
+    res.status(200).json({ message: "owner created successfully", token });
+  } catch (e) {
+    console.log(e);
   }
 };
 // module.exports = {

@@ -1,25 +1,21 @@
 import mongoose from "mongoose";
 
-const subExerciseSchema = new mongoose.Schema({
-  title: { type: String },
-  alphabetPhonetic: { type: String },
-  audio_video_url: { type: String },
-});
-
 const questionSchema = new mongoose.Schema(
   {
     type: {
-      type: String,
-      enum: ["exercise", "voice", "blanks", "drag_drop", "match"],
+      type: [String],
+      enum: ["exercise", "voice", "blanks", "drag_drop", "match", "tap"],
       required: true,
     },
-
-    order: {
-      globalIndex: { type: Number, required: true, unique: true },
-      level: {
-        type: Number,
+    content: { type: mongoose.Schema.Types.Mixed },
+    meta: {
+      tags: {
+        type: [String],
+        enum: ["memorization"],
       },
-      levelIndex: { type: Number },
+      level: { type: Number, required: true, unique: true },
+      globalIndex: { type: Number, required: true, unique: true },
+      levelIndex: { type: Number, required: true, unique: true },
     },
   },
   { timestamps: true }

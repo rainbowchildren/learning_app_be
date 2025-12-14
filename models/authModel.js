@@ -6,6 +6,7 @@ const authSchema = new mongoose.Schema(
     // email: { type: String, unique: true, required: true, index: true },
     // phoneNumber: { type: String, unique: true, required: true },
     password: { type: String, required: true },
+    requiredToChangePassword: { type: Boolean },
     lastLogin: {},
   },
   { timeStamps: true }

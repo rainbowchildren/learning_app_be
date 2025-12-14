@@ -7,7 +7,9 @@ import {
 } from "@aws-sdk/client-s3";
 import fs from "fs";
 import path from "path";
-
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import dotenv from "dotenv";
+dotenv.config();
 // Initialize S3 client
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -16,8 +18,13 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-
-const BUCKET_NAME = process.env.AWS_S3_BUCKET;
+console.log(
+  "FROM S3",
+  process.env.AWS_ACCESS_KEY_ID,
+  process.env.AWS_SECRET_ACCESS_KEY,
+  process.env.AWS_BUCKET_NAME
+);
+const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
 
 // Helper: Upload file
 export const uploadFile = async (filePath, key) => {
@@ -78,3 +85,15 @@ export const listFiles = async (prefix = "") => {
 export const getPublicUrl = (key) => {
   return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 };
+
+export const getPresignedUrl = async (key) => {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+  });
+
+  // URL valid for 10 minutes → adjust as you want
+  return await getSignedUrl(s3, command, { expiresIn: 600 });
+};
+
+export { s3 };

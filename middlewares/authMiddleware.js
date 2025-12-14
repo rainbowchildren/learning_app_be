@@ -24,7 +24,7 @@ export const verifyJWTMiddleware = (req, res, next) => {
     if (!decoded.userId || !decoded.role) {
       return res.status(401).json({ message: "Token invalid" });
     }
-
+    console.log("dec", decoded.userId);
     req.userId = decoded.userId;
     req.role = decoded.role;
     next();

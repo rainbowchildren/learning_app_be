@@ -2,6 +2,8 @@
   "type": "module",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
+    "@aws-sdk/s3-request-presigner": "^3.940.0",
+    "aws-sdk": "^2.1692.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -9,15 +11,16 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.18.0",
     "mongoose": "^8.17.1",
-    "uuid": "^13.0.0"
+    "multer": "^2.0.2",
+    "uuid": "^13.0.0",
+    "xlsx": "^0.18.5"
   },
   "name": "rainbow_learning",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ENV=production node index.js",
-    "dev": "ENV=development nodemon index.js"
+    "start": "NODE_ENV=production node index.js",
+    "dev": "NODE_ENV=development nodemon index.js"
   },
   "author": "",
   "license": "ISC",
