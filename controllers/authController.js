@@ -45,7 +45,7 @@ export const createAdmin = async (req, res) => {
         auth: savedUserAuth._id,
         role,
         username,
-        orgId,
+        organisation: orgId,
       });
       await newUserRecord.save();
     }
@@ -58,16 +58,22 @@ export const createAdmin = async (req, res) => {
 };
 export const createNewUser = async (req, res) => {
   try {
-    const { username, password, role, orgId } = req.body;
+    const { username, password, role, organisation, adminRef } = req.body;
 
     if (role === ROLES.OWNER) {
       return res.status(400).send({ message: "owner cannot be created" });
     }
-    if (!username || !password || !role || !orgId) {
+    if (!username || !password || !role || !organisation) {
       return res.status(400).json({ message: "missing" });
     }
 
-    const result = await createUserService({ username, password, role, orgId });
+    const result = await createUserService({
+      username,
+      password,
+      role,
+      organisation,
+      adminRef,
+    });
     if (!result.success) {
       return res.status(400).json(result);
     }

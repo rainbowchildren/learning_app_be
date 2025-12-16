@@ -5,29 +5,37 @@ import organisationModel from "../models/organisationModel.js";
 import bcrypt from "bcryptjs";
 import userModel from "../models/userModel.js";
 import { generateJWT } from "../middlewares/authMiddleware.js";
+import { ROLES } from "../constants/constants.js";
 
 export const createBulkUsers = async (req, res) => {
   try {
     const adminId = req.userId;
+
     if (!adminId) {
-      return res.status(400).send({ mesage: "not valid admin" });
+      return res.status(400).json({ message: "Invalid admin" });
     }
 
-    const orgId = await userModel
-      .findOne({ _id: adminId })
-      .select("organisation -_id");
+    // 1. Get admin + organisation
+    const admin = await userModel.findById(adminId).select("organisation role");
+    console.log("admin", admin);
+    if (!admin || admin.role !== ROLES.ADMIN) {
+      return res.status(403).json({ message: "Not an admin" });
+    }
 
-    if (!orgId) {
-      return res.status(400).send({
-        message: "Organisation not associated. Please contact Super admin",
+    if (!admin.organisation) {
+      return res.status(400).json({
+        message: "Organisation not associated. Contact super admin",
       });
     }
+
+    // 2. File validation
     if (!req.file) {
       return res
         .status(400)
-        .send({ success: false, message: "No file uploaded" });
+        .json({ success: false, message: "No file uploaded" });
     }
 
+    // 3. Read Excel
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
@@ -38,26 +46,30 @@ export const createBulkUsers = async (req, res) => {
     if (!data.length) {
       return res
         .status(400)
-        .send({ success: false, message: "No data in file" });
+        .json({ success: false, message: "No data in file" });
     }
-    // const orgId = "68ecff04917117c859ef4d09";
-    const userPromises = data.map((row, idx) => {
+
+    // 4. Create students
+    const userPromises = data.map((row) => {
       const payload = {
         username: row.username || row.Email || "",
         password: "1234",
-        role: "student",
-        orgId: "68ecff04917117c859ef4d09",
-        // orgId: idx === data.length - 2 ? "68ecff04917117c859ef4d09" : orgId,
+        role: ROLES.STUDENT,
+        organisation: admin.organisation,
+        adminRef: adminId,
       };
+      console.log("payload", payload);
       return createUserService(payload, true);
     });
 
     const results = await Promise.all(userPromises);
-    console.log("results", results);
+
     const successUsers = results.filter((r) => r.success);
     const failedUsers = results.filter((r) => !r.success);
-    console.log("failedUsers", failedUsers);
+
+    // 5. Response
     res.status(200).json({
+      success: true,
       total: results.length,
       created: successUsers.length,
       failed: failedUsers.map((f) => ({
@@ -67,18 +79,81 @@ export const createBulkUsers = async (req, res) => {
     });
   } catch (err) {
     console.error("createBulkUsers error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
 };
+
+// export const createUserService = async (
+//   payload,
+//   requiredToChangePassword = false
+// ) => {
+//   try {
+//     const { username, password, role, orgId } = payload;
+//     console.log(username, password, role, orgId);
+//     if (!username || !password || !role) {
+//       return { success: false, username, message: "Missing required fields" };
+//     }
+
+//     const existingUser = await authModel.findOne({ username });
+//     if (existingUser) {
+//       return { success: false, username, message: "User already exists" };
+//     }
+
+//     const organisation = await organisationModel.findById(orgId);
+//     if (!organisation) {
+//       return {
+//         success: false,
+//         username,
+//         message: "Organisation does not exist",
+//       };
+//     }
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const authDoc = await authModel.create({
+//       username,
+//       password: hashedPassword,
+//       requiredToChangePassword: requiredToChangePassword ? true : false,
+//     });
+
+//     const userDoc = await userModel.create({
+//       auth: authDoc._id,
+//       organisation: orgId,
+//       role,
+//       username,
+//     });
+
+//     const token = await generateJWT(userDoc._id, role);
+//     console.log(token);
+//     if (token) {
+//       return {
+//         success: true,
+//         username,
+//         token,
+//         message: "User created successfully",
+//       };
+//     }
+//   } catch (e) {
+//     console.error("createUserService error:", e);
+//     return {
+//       success: false,
+//       username: payload.username || "",
+//       message: e.message,
+//     };
+//   }
+// };
 
 export const createUserService = async (
   payload,
   requiredToChangePassword = false
 ) => {
   try {
-    const { username, password, role, orgId } = payload;
+    const { username, password, role, organisation, adminRef } = payload;
 
-    if (!username || !password || !role || !orgId) {
+    if (!username || !password || !role) {
       return { success: false, username, message: "Missing required fields" };
     }
 
@@ -86,9 +161,10 @@ export const createUserService = async (
     if (existingUser) {
       return { success: false, username, message: "User already exists" };
     }
-
-    const organisation = await organisationModel.findById(orgId);
-    if (!organisation) {
+    console.log("organisation", organisation);
+    // validate organisation
+    const orgExists = await organisationModel.findById(organisation);
+    if (!orgExists) {
       return {
         success: false,
         username,
@@ -97,31 +173,30 @@ export const createUserService = async (
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const authDoc = await authModel.create({
       username,
       password: hashedPassword,
-      requiredToChangePassword: requiredToChangePassword ? true : false,
+      requiredToChangePassword: !!requiredToChangePassword,
     });
 
     const userDoc = await userModel.create({
       auth: authDoc._id,
-      organisation: orgId,
-      role,
       username,
+      role,
+      organisation, // ✅ ObjectId saved
+      adminRef, // ✅ admin linked
     });
 
     const token = await generateJWT(userDoc._id, role);
-    console.log(token);
-    if (token) {
-      return {
-        success: true,
-        username,
-        token,
-        message: "User created successfully",
-      };
-    }
+
+    return {
+      success: true,
+      username,
+      token,
+      message: "User created successfully",
+    };
   } catch (e) {
-    console.error("createUserService error:", e);
     return {
       success: false,
       username: payload.username || "",

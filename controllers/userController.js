@@ -81,9 +81,40 @@ export const deleteProfile = async () => {};
 
 export const getAllAdmins = async (req, res) => {
   try {
-    const admins = await userModel
-      .find({ role: ROLES.ADMIN })
-      .select("-_id -__v -auth");
+    const admins = await userModel.aggregate([
+      { $match: { role: ROLES.ADMIN } },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "adminRef",
+          as: "students",
+        },
+      },
+
+      {
+        $lookup: {
+          from: "orgs",
+          localField: "organisation",
+          foreignField: "_id",
+          as: "organisation",
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          username: 1,
+          role: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          organisation: { $arrayElemAt: ["$organisation.name", 0] },
+          studentCount: { $size: "$students" },
+        },
+      },
+    ]);
+
     res.status(200).json({
       success: true,
       message: admins.length
@@ -92,7 +123,81 @@ export const getAllAdmins = async (req, res) => {
       data: admins,
     });
   } catch (err) {
-    console.error("Error fetching admins:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: err.message,
+    });
+  }
+};
+
+export const deleteAdmin = async (req, res) => {
+  const { adminId } = req.params;
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    // 1. Find admin
+    const admin = await userModel.findById(adminId).session(session);
+    if (!admin || admin.role !== ROLES.ADMIN) {
+      throw new Error("Admin not found");
+    }
+
+    // 2. Delete students under this admin
+    await userModel.deleteMany(
+      { adminRef: adminId, role: ROLES.STUDENT },
+      { session }
+    );
+
+    // 3. Delete organisation
+    if (admin.organisation) {
+      await mongoose
+        .model("Org")
+        .findByIdAndDelete(admin.organisation, { session });
+    }
+
+    // 4. Delete admin
+    await userModel.findByIdAndDelete(adminId, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      success: true,
+      message: "Admin and all related data deleted successfully",
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getMyStudents = async (req, res) => {
+  try {
+    const adminId = req.userId;
+
+    const students = await userModel
+      .find({
+        role: ROLES.STUDENT,
+        adminRef: adminId,
+      })
+      .select("-__v -auth")
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      message: students.length
+        ? "Students fetched successfully"
+        : "No students found",
+      data: students,
+    });
+  } catch (err) {
     res.status(500).json({
       success: false,
       message: "Internal Server Error",

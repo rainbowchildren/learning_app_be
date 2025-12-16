@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   deleteProfile,
   getAllAdmins,
+  getMyStudents,
   getUser,
   updateProfile,
 } from "../controllers/userController.js";
@@ -20,5 +21,7 @@ userService.get(
   authorizeRoles(ROLES.OWNER),
   getAllAdmins
 );
+
+userService.get("/getMyStudents", verifyJWTMiddleware, getMyStudents);
 
 export default userService;

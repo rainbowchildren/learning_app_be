@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getLevelQuestionProgress,
   getProgressByUserId,
   saveJourney,
   storeProgress,
@@ -31,4 +32,10 @@ userProgress.get(
   getProgressByUserId
 );
 
+userProgress.get(
+  "/studentReportByLevel/:level/:studentId",
+  verifyJWTMiddleware,
+  authorizeRoles(ROLES.ADMIN),
+  getLevelQuestionProgress
+);
 export default userProgress;

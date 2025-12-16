@@ -65,7 +65,7 @@ export const getProgressByUserId = async (req, res) => {
     const lastCompletedUUID = journeyArr[journeyArr.length - 1];
 
     // Find progress for that UUID
-    const userProgressData = await UserProgress.findOne({
+    const userProgressData = await userProgress.findOne({
       userId,
       contentUUID: lastCompletedUUID,
     });
@@ -185,6 +185,104 @@ export const storeProgress = async (req, res) => {
       message: "Internal Server Error",
       error: e.message,
       success: false,
+    });
+  }
+};
+
+export const getLevelQuestionProgress = async (req, res) => {
+  try {
+    // const userId = req.userId;
+    const { level, studentId } = req.params; // example: "1"
+    const userId = studentId;
+
+    if (!userId || !level) {
+      return res.status(400).json({
+        success: false,
+        message: "UserId or level missing",
+      });
+    }
+
+    // 1️⃣ Get ALL questions for this student
+    const allQuestions = await userProgress
+      .find({
+        userId,
+        type: "Question",
+      })
+      .lean();
+
+    // 2️⃣ Filter questions belonging to this level
+    // level format: "1_1", "1_2" → split by "_"
+    const questions = allQuestions.filter((q) => {
+      const [parentLevel] = q.level.split("_");
+      return parentLevel === level;
+    });
+
+    if (!questions.length) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          level,
+          totalQuestions: 0,
+          metrics: {},
+          progress: {
+            completedPercent: 0,
+            scorePercent: 0,
+          },
+          lastUpdatedAt: null,
+        },
+      });
+    }
+
+    // 3️⃣ Metrics + calculations
+    const metrics = {};
+    let passedCount = 0;
+    let completedCount = 0;
+    let latestUpdatedAt = null;
+
+    questions.forEach((q) => {
+      // metric count
+      const metric = q.subLevel?.feedbackType;
+      if (metric) {
+        metrics[metric] = (metrics[metric] || 0) + 1;
+      }
+
+      if (q.result === true) passedCount++;
+      if (q.status === "Completed") completedCount++;
+
+      if (!latestUpdatedAt || q.updatedAt > latestUpdatedAt) {
+        latestUpdatedAt = q.updatedAt;
+      }
+    });
+
+    const totalQuestions = questions.length;
+
+    const completedPercent = Math.round(
+      (completedCount / totalQuestions) * 100
+    );
+
+    // score rule: passed / 25
+    const scorePercent = Math.round((passedCount / 25) * 100);
+
+    // 4️⃣ Final response
+    res.status(200).json({
+      success: true,
+      data: {
+        level,
+        totalQuestions,
+        metrics,
+        progress: {
+          completedPercent, // linear progress
+          scorePercent, // pie chart
+        },
+        lastUpdatedAt: latestUpdatedAt,
+      },
+    });
+  } catch (err) {
+    console.error("getLevelQuestionProgress error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: err.message,
     });
   }
 };
