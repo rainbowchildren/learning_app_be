@@ -14,7 +14,7 @@ const app = express();
 // app.use(cors(["http://localhost:5173"]));
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://rainbow-children-fe-4r3j.vercel.app/",
+  "https://rainbow-children-doo22pwcc-rainbowchildrens-projects.vercel.app",
 ];
 app.use(
   cors({
