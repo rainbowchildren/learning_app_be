@@ -14,7 +14,7 @@ const app = express();
 // app.use(cors(["http://localhost:5173"]));
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://your-frontend-domain.onrender.com",
+  "https://rainbow-children-fe-4r3j.vercel.app/",
 ];
 app.use(
   cors({
