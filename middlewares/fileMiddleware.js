@@ -4,7 +4,7 @@ const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   // Accept images, audio, video
-  const allowedTypes = /jpeg|jpg|png|gif|mp3|wav|mp4|mov|avi|csv|xlsx/;
+  const allowedTypes = /jpeg|jpg|png|gif|mp3|wav|webm|mp4|mov|avi|csv|xlsx/;
   const ext = file.originalname.split(".").pop().toLowerCase();
 
   if (allowedTypes.test(ext)) {

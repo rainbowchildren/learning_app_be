@@ -6,10 +6,10 @@ import {
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import fs from "fs";
-import path from "path";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import dotenv from "dotenv";
 dotenv.config();
+
 // Initialize S3 client
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -22,22 +22,20 @@ console.log(
   "FROM S3",
   process.env.AWS_ACCESS_KEY_ID,
   process.env.AWS_SECRET_ACCESS_KEY,
-  process.env.AWS_BUCKET_NAME
+  process.env.AWS_BUCKET_NAME,
+  process.env.AWS_REGION
 );
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
 
-// Helper: Upload file
-export const uploadFile = async (filePath, key) => {
-  console.log("AWS_REGION", process.env.AWS_REGION);
-  const fileStream = fs.createReadStream(filePath);
+export const uploadFile = async (fileBuffer, key) => {
   const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key, // e.g., "audio/song1.mp3" or "video/movie1.mp4"
-    Body: fileStream,
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: "audio/webm",
   });
 
   await s3.send(command);
-  console.log(`✅ Uploaded: ${key}`);
 };
 
 // Helper: Download file
@@ -56,7 +54,7 @@ export const downloadFile = async (key, downloadPath) => {
   }
 
   fs.writeFileSync(downloadPath, Buffer.concat(chunks));
-  console.log(`✅ Downloaded: ${key} → ${downloadPath}`);
+  console.log(` Downloaded: ${key} → ${downloadPath}`);
 };
 
 // Helper: Delete file

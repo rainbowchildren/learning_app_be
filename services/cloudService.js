@@ -1,10 +1,16 @@
 import { Router } from "express";
-import { uploadS3 } from "../controllers/cloudController.js";
+import {
+  getBagEmpathyAudio,
+  getTranscriptionStatus,
+  uploadAndStartTranscription,
+  uploadS3,
+} from "../controllers/cloudController.js";
 import { upload } from "../middlewares/fileMiddleware.js";
 import { s3, getPresignedUrl } from "../helpers/s3Service.js";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 dotenv.config();
+
 const cloudService = Router();
 
 cloudService.post("/upload", upload.single("file"), uploadS3);
@@ -32,5 +38,21 @@ cloudService.get("/media/:type/:fileName", async (req, res) => {
     res.status(500).json({ error: "Failed to generate URL" });
   }
 });
+
+// cloudService.post("/synthesize", synthesizeSpeechController);
+
+cloudService.post(
+  "/transcribe",
+  upload.single("audio"),
+  uploadAndStartTranscription
+);
+
+cloudService.get(
+  "/getTranscribedText/:jobName",
+
+  getTranscriptionStatus
+);
+
+cloudService.get("/bag/empathy/:word", getBagEmpathyAudio);
 
 export default cloudService;
