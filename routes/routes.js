@@ -1,5 +1,6 @@
 import authService from "../services/authService.js";
 import cloudService from "../services/cloudService.js";
+import feedbackService from "../services/feedback.js";
 import orgService from "../services/organisationService.js";
 import questions from "../services/questionService.js";
 import userProgress from "../services/userProgressService.js";
@@ -26,6 +27,10 @@ export const ROUTES = [
   {
     path: "/api/Organisation",
     service: userProgress,
+  },
+  {
+    path: "/api/feedback",
+    service: feedbackService,
   },
   {
     path: "/api/file",

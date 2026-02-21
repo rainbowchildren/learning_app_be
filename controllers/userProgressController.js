@@ -52,7 +52,7 @@ export const getProgressByUserId = async (req, res) => {
     const userId = req.userId;
     console.log("userId", userId);
     const userJourney = await ContentMapModel.findOne({ userId });
-    console.log("userJourney", userJourney);
+
     if (!userJourney || userJourney.journeyTracker.length === 0) {
       return res.status(200).json({
         message: "No progress found",
@@ -69,7 +69,7 @@ export const getProgressByUserId = async (req, res) => {
       userId,
       contentUUID: lastCompletedUUID,
     });
-    console.log("userProgressData", userProgressData);
+
     return res.status(200).json({
       success: true,
       // lastCompletedUUID,
@@ -83,6 +83,12 @@ export const getProgressByUserId = async (req, res) => {
 
 export const storeProgress = async (req, res) => {
   try {
+    if (typeof req.body != "object") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
+    }
+
     const {
       type,
       contentUUID,
@@ -96,9 +102,36 @@ export const storeProgress = async (req, res) => {
     const userId = req.userId;
 
     if (!contentUUID || !type || !level) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
     }
 
+    if (type === "LevelComplete") {
+      const existing = await userProgress.findOne({ userId, contentUUID });
+
+      if (existing) {
+        return res.status(200).json({
+          success: true,
+          message: "Level already completed",
+        });
+      }
+
+      await userProgress.create({
+        userId,
+        type,
+        contentUUID,
+        level,
+        status: "Completed",
+        result: true,
+        feedbackType,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Level completed",
+      });
+    }
     let record = await userProgress.findOne({ userId, contentUUID });
     let questionRecord = {};
 
@@ -107,7 +140,8 @@ export const storeProgress = async (req, res) => {
         userId,
         type,
         contentUUID,
-        level,
+        level:
+          typeof level === "object" ? `${level.level}_${level.order}` : level,
         exersiceSubLevelUUID,
         status: "Pending",
       };
@@ -140,7 +174,7 @@ export const storeProgress = async (req, res) => {
 
       const result = await userProgress.updateOne(
         { _id: record._id },
-        { $addToSet: { exersiceSubLevelUUID: uuid }, $set: { status } }
+        { $addToSet: { exersiceSubLevelUUID: uuid }, $set: { status } },
       );
 
       // MongoDB response check
@@ -257,7 +291,7 @@ export const getLevelQuestionProgress = async (req, res) => {
     const totalQuestions = questions.length;
 
     const completedPercent = Math.round(
-      (completedCount / totalQuestions) * 100
+      (completedCount / totalQuestions) * 100,
     );
 
     // score rule: passed / 25
