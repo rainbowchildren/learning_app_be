@@ -18,18 +18,23 @@ cloudService.post("/upload", upload.single("file"), uploadS3);
 cloudService.get("/media/:type/:fileName", async (req, res) => {
   try {
     const { type, fileName } = req.params;
+    console.log("_DEBUG 1", { type, fileName });
     const key = `${type}/${fileName}`;
+    console.log("_DEBUG 2", key);
     // Check file exists in S3
     try {
       await s3.send(
         new HeadObjectCommand({
           Bucket: process.env.AWS_BUCKET_NAME,
           Key: key,
-        })
+        }),
       );
     } catch (err) {
       console.log(err);
-      return res.status(404).json({ error: "File not found in S3" });
+      console.log("_DEBUG 3", err);
+      return res
+        .status(404)
+        .json({ error: "File not found in S3", err: err.toString() });
     }
 
     const url = await getPresignedUrl(key);
@@ -44,13 +49,13 @@ cloudService.get("/media/:type/:fileName", async (req, res) => {
 cloudService.post(
   "/transcribe",
   upload.single("audio"),
-  uploadAndStartTranscription
+  uploadAndStartTranscription,
 );
 
 cloudService.get(
   "/getTranscribedText/:jobName",
 
-  getTranscriptionStatus
+  getTranscriptionStatus,
 );
 
 cloudService.get("/bag/empathy/:word", getBagEmpathyAudio);
