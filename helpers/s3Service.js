@@ -18,13 +18,7 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-console.log(
-  "FROM S3",
-  process.env.AWS_ACCESS_KEY_ID,
-  process.env.AWS_SECRET_ACCESS_KEY,
-  process.env.AWS_BUCKET_NAME,
-  process.env.AWS_REGION
-);
+
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
 
 export const uploadFile = async (fileBuffer, key) => {
