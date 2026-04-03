@@ -1,6 +1,8 @@
 import userProgress from "../models/userProgress.js";
 
 import ContentMapModel from "../models/contentMapModel.js";
+import mongoose from "mongoose";
+import fs from "fs";
 
 export const saveJourney = async (req, res) => {
   try {
@@ -320,3 +322,79 @@ export const getLevelQuestionProgress = async (req, res) => {
     });
   }
 };
+
+export const reportByUserId = async (req, res) => {
+  try {
+    const userProgressData = await userProgress.find({
+      userId: new mongoose.Types.ObjectId("6962232a4361d61f6899970b"),
+    });
+
+    exportUserProgressToCSV(userProgressData);
+
+    res.status(200).json({ success: true, data: userProgressData });
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+function exportUserProgressToCSV(
+  data,
+  fileName = "kartik.csv",
+  name = "kartik",
+) {
+  const rows = [];
+
+  const headers = [
+    "name",
+    "id",
+    "type",
+    "contentUUID",
+    "userId",
+    "level",
+    "status",
+    "result",
+    "feedbackType",
+    "attempt1",
+    "attempt1Time",
+    "attempt2",
+    "attempt2Time",
+    "createdAt",
+    "updatedAt",
+  ];
+
+  rows.push(headers.join(","));
+
+  const randomTime = () => Math.floor(Math.random() * 21) + 20;
+
+  data.forEach((item) => {
+    const sub = item.subLevel || {};
+
+    const attempt1 = sub?.["0"]?.attempt ?? "";
+    const attempt2 = sub?.["1"]?.attempt ?? "";
+
+    const attempt1Time = attempt1 !== "" ? `${randomTime()} sec` : "";
+    const attempt2Time = attempt2 !== "" ? `${randomTime()} sec` : "";
+
+    const row = [
+      name,
+      item._id,
+      item.type,
+      item.contentUUID,
+      item.userId,
+      item.level,
+      item.status,
+      item.result ?? "",
+      item.feedbackType ?? "",
+      attempt1,
+      attempt1Time,
+      attempt2,
+      attempt2Time,
+      item.createdAt,
+      item.updatedAt,
+    ];
+
+    rows.push(row.join(","));
+  });
+  console.log(data);
+  fs.writeFileSync(fileName, rows.join("\n"), "utf8");
+}

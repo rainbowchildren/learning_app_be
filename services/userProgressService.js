@@ -4,6 +4,7 @@ import {
   getProgressByUserId,
   saveJourney,
   storeProgress,
+  reportByUserId,
   // validateAnswer,
 } from "../controllers/userProgressController.js";
 import { ROLES } from "../constants/constants.js";
@@ -16,26 +17,33 @@ userProgress.post(
   "/saveJourney",
   verifyJWTMiddleware,
   authorizeRoles(ROLES.STUDENT),
-  saveJourney
+  saveJourney,
 );
 userProgress.post(
   "/save",
   verifyJWTMiddleware,
   authorizeRoles(ROLES.STUDENT),
-  storeProgress
+  storeProgress,
 );
 
 userProgress.get(
   "/getProgressByUserId",
   verifyJWTMiddleware,
   authorizeRoles(ROLES.STUDENT),
-  getProgressByUserId
+  getProgressByUserId,
 );
 
 userProgress.get(
   "/studentReportByLevel/:level/:studentId",
   verifyJWTMiddleware,
   authorizeRoles(ROLES.ADMIN),
-  getLevelQuestionProgress
+  getLevelQuestionProgress,
+);
+
+userProgress.get(
+  "/report/byUserId",
+  verifyJWTMiddleware,
+  authorizeRoles(ROLES.ADMIN, ROLES.OWNER),
+  reportByUserId,
 );
 export default userProgress;

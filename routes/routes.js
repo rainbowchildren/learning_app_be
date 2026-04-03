@@ -24,10 +24,10 @@ export const ROUTES = [
     path: "/api/journey",
     service: userProgress,
   },
-  {
-    path: "/api/Organisation",
-    service: userProgress,
-  },
+  // {
+  //   path: "/api/Organisation",
+  //   service: userProgress,
+  // },
   {
     path: "/api/feedback",
     service: feedbackService,

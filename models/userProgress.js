@@ -8,6 +8,7 @@ const progressSchema = new mongoose.Schema(
       required: true,
     },
     contentUUID: { type: String, required: true },
+    response: { type: String },
     userId: { type: mongoose.Types.ObjectId, ref: "user" },
     level: { type: String },
     exersiceSubLevelUUID: [{ type: String }],
