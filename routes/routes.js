@@ -1,3 +1,4 @@
+import audioService from "../services/audioService.js";
 import authService from "../services/authService.js";
 import cloudService from "../services/cloudService.js";
 import feedbackService from "../services/feedback.js";
@@ -35,6 +36,10 @@ export const ROUTES = [
   {
     path: "/api/file",
     service: cloudService,
+  },
+  {
+    path: "/api/audio",
+    service: audioService,
   },
   { path: "/api/organisation", service: orgService },
 ];
